@@ -1,4 +1,4 @@
-# @cellystial/sdk
+# cellystial-sdk
 
 Official Cellystial SDK for Node.js & TypeScript. Generate PDFs from your templates with a clean,
 typed client. Reference implementation — the Python, PHP, and Go SDKs mirror this surface
@@ -7,7 +7,7 @@ typed client. Reference implementation — the Python, PHP, and Go SDKs mirror t
 ## Install
 
 ```bash
-npm install @cellystial/sdk
+npm install cellystial-sdk
 ```
 
 Requires Node.js 18+ (uses the built-in `fetch`). No runtime dependencies.
@@ -15,7 +15,7 @@ Requires Node.js 18+ (uses the built-in `fetch`). No runtime dependencies.
 ## Quick start
 
 ```ts
-import { CellystialClient } from '@cellystial/sdk';
+import { CellystialClient } from 'cellystial-sdk';
 import { writeFileSync } from 'node:fs';
 
 const client = new CellystialClient({ apiKey: process.env.CELLYSTIAL_API_KEY! });
@@ -82,7 +82,7 @@ equal to `userPassword`, or any reader could strip the restrictions. Passwords a
 Free-tier accounts get a `ForbiddenError`.
 
 ```ts
-import { ForbiddenError } from '@cellystial/sdk';
+import { ForbiddenError } from 'cellystial-sdk';
 
 try {
   const { content } = await client.generatePdf('invoice', data, {
@@ -123,7 +123,7 @@ the **raw** request body (not a re-parsed object) using your `whsec_…` secret 
 dashboard settings):
 
 ```ts
-import { verifyWebhook } from '@cellystial/sdk';
+import { verifyWebhook } from 'cellystial-sdk';
 
 // Express example — capture the raw body, e.g. express.json({ verify: (req, _res, buf) => { req.rawBody = buf } })
 app.post('/webhooks/cellystial', (req, res) => {
@@ -144,8 +144,11 @@ All failures throw a subclass of `CellystialError` carrying `statusCode`, `messa
 `ForbiddenError` (403) · `NotFoundError` (404) · `RateLimitError` (429) · `ApiError` (5xx/other) ·
 `ConnectionError` (transport).
 
+On a 429, `RateLimitError.retryAfter` carries the number of seconds to wait (parsed from the
+`Retry-After` header), or `null` if the server didn't send one — back off and retry after that delay.
+
 ```ts
-import { QuotaExceededError } from '@cellystial/sdk';
+import { QuotaExceededError } from 'cellystial-sdk';
 
 try {
   await client.generatePdf('invoice', data);

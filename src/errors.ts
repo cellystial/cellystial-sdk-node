@@ -40,7 +40,24 @@ export class ForbiddenError extends CellystialError {}
 export class NotFoundError extends CellystialError {}
 
 /** 429 — rate / throughput limit hit. */
-export class RateLimitError extends CellystialError {}
+export class RateLimitError extends CellystialError {
+  /**
+   * Seconds to wait before retrying, parsed from the `Retry-After` response
+   * header. `null` when the server did not send one.
+   */
+  readonly retryAfter: number | null;
+
+  constructor(
+    message: string,
+    statusCode: number,
+    messages?: string[],
+    raw?: unknown,
+    retryAfter?: number | null,
+  ) {
+    super(message, statusCode, messages, raw);
+    this.retryAfter = retryAfter ?? null;
+  }
+}
 
 /** 5xx and any other non-2xx not covered above. */
 export class ApiError extends CellystialError {}
@@ -53,6 +70,20 @@ export class ConnectionError extends CellystialError {
 }
 
 /**
+ * Parses a `Retry-After` header into a number of seconds. Handles both forms:
+ * a delta in seconds (`"120"`) and an HTTP-date (`"Wed, 21 Oct 2026 07:28:00 GMT"`).
+ * Returns `null` when absent or unparseable; never returns a negative value.
+ */
+export function parseRetryAfter(value: string | null | undefined, now: number = Date.now()): number | null {
+  if (!value) return null;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, Math.round(seconds));
+  const at = Date.parse(value);
+  if (!Number.isNaN(at)) return Math.max(0, Math.round((at - now) / 1000));
+  return null;
+}
+
+/**
  * Maps an HTTP status + normalized message to the right typed error.
  * Used internally by the client; exported for advanced consumers.
  */
@@ -61,6 +92,7 @@ export function errorFromStatus(
   message: string,
   messages: string[],
   raw: unknown,
+  retryAfter: number | null = null,
 ): CellystialError {
   switch (statusCode) {
     case 400:
@@ -74,7 +106,7 @@ export function errorFromStatus(
     case 404:
       return new NotFoundError(message, statusCode, messages, raw);
     case 429:
-      return new RateLimitError(message, statusCode, messages, raw);
+      return new RateLimitError(message, statusCode, messages, raw, retryAfter);
     default:
       return new ApiError(message, statusCode, messages, raw);
   }

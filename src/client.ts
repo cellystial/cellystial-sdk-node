@@ -1,6 +1,8 @@
-import { ConnectionError, errorFromStatus } from './errors';
+import { ConnectionError, errorFromStatus, parseRetryAfter } from './errors';
 import {
   BatchItem,
+  BatchResponse,
+  BatchStatus,
   CellystialClientOptions,
   CreateWebhookParams,
   GeneratePdfOptions,
@@ -109,11 +111,11 @@ export class CellystialClient {
     templateId: string,
     data: Array<Record<string, unknown>>,
     options: { webhookUrl?: string } = {},
-  ): Promise<Record<string, unknown>> {
+  ): Promise<BatchResponse> {
     const body: Record<string, unknown> = { templateId, data };
     if (options.webhookUrl) body.webhookUrl = options.webhookUrl;
     const res = await this.request('POST', '/generate/batch', body);
-    return (await this.parseJson(res)) as Record<string, unknown>;
+    return (await this.parseJson(res)) as BatchResponse;
   }
 
   /**
@@ -127,17 +129,17 @@ export class CellystialClient {
     templateId: string,
     items: BatchItem[],
     options: { webhookUrl?: string } = {},
-  ): Promise<Record<string, unknown>> {
+  ): Promise<BatchResponse> {
     const body: Record<string, unknown> = { templateId, items };
     if (options.webhookUrl) body.webhookUrl = options.webhookUrl;
     const res = await this.request('POST', '/generate/batch', body);
-    return (await this.parseJson(res)) as Record<string, unknown>;
+    return (await this.parseJson(res)) as BatchResponse;
   }
 
   /** Fetches the status of a previously queued batch. */
-  async getBatchStatus(batchId: string): Promise<Record<string, unknown>> {
+  async getBatchStatus(batchId: string): Promise<BatchStatus> {
     const res = await this.request('GET', `/generate/batch/${encodeURIComponent(batchId)}`);
-    return (await this.parseJson(res)) as Record<string, unknown>;
+    return (await this.parseJson(res)) as BatchStatus;
   }
 
   // ── Webhooks ────────────────────────────────────────────────────────────────
@@ -220,7 +222,8 @@ export class CellystialClient {
       // Non-JSON error body — fall through to the status-only fallback.
     }
     const { message, messages } = normalizeMessages(parsed, `Request failed with status ${res.status}`);
-    throw errorFromStatus(res.status, message, messages, parsed);
+    const retryAfter = res.status === 429 ? parseRetryAfter(res.headers.get('retry-after')) : null;
+    throw errorFromStatus(res.status, message, messages, parsed, retryAfter);
   }
 
   private async parseJson(res: Response): Promise<unknown> {

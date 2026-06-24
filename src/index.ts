@@ -13,6 +13,11 @@ export {
 } from './errors';
 export type {
   BatchItem,
+  BatchResponse,
+  BatchResult,
+  BatchStatus,
+  BatchStatusValue,
+  BatchItemStatusValue,
   CellystialClientOptions,
   Template,
   ListTemplatesParams,

@@ -108,6 +108,60 @@ export interface GenerateResult {
   durationMs: number | null;
 }
 
+/** Overall status of a batch (see {@link BatchStatus}). */
+export type BatchStatusValue = 'queued' | 'processing' | 'completed' | 'failed';
+
+/** Status of a single document within a batch (see {@link BatchResult}). */
+export type BatchItemStatusValue = 'pending' | 'processing' | 'completed' | 'failed';
+
+/**
+ * Acknowledgement returned when a batch is queued by `generateBatch` /
+ * `generateBatchItems`. The batch runs asynchronously — poll
+ * `getBatchStatus(batchId)` or set a `webhookUrl` to receive `batch.completed`.
+ */
+export interface BatchResponse {
+  /** The batch id — pass to `getBatchStatus`, or correlate with the webhook. */
+  batchId: string;
+  /** Always `'queued'` — the batch was accepted for processing. */
+  status: 'queued';
+  /** Human-readable confirmation (e.g. how many items were enqueued). */
+  message: string;
+}
+
+/** One document's result within a batch (see {@link BatchStatus}). */
+export interface BatchResult {
+  /** Zero-based position of this document in the input array. */
+  rowIndex: number;
+  /** Your `documentId` — present only for the keyed `items[]` shape. */
+  documentId?: string;
+  /** Output filename (always ends in `.pdf`). */
+  filename: string;
+  /** This document's status. */
+  status: BatchItemStatusValue;
+  /** Presigned download URL once generated; `null` until the document completes. */
+  downloadUrl: string | null;
+  /** Error message — present only when `status` is `'failed'`. */
+  error?: string;
+}
+
+/** Status of a batch, as returned by `getBatchStatus`. */
+export interface BatchStatus {
+  /** The batch id. */
+  id: string;
+  /** Overall batch status. */
+  status: BatchStatusValue;
+  /** Total number of documents in the batch. */
+  total: number;
+  /** Number of documents completed so far. */
+  completed: number;
+  /** Number of documents that failed. */
+  failed: number;
+  /** Per-document results. */
+  results: BatchResult[];
+  /** A single ZIP of every PDF — set only for storage-off (ephemeral) accounts. */
+  zipUrl?: string;
+}
+
 /** Options for `verifyWebhook`. */
 export interface VerifyWebhookOptions {
   /** Max allowed age of the signature timestamp, in seconds. Default 300. */

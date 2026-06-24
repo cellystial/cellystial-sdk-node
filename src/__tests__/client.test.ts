@@ -1,5 +1,5 @@
 import { CellystialClient } from '../client';
-import { AuthenticationError, ValidationError } from '../errors';
+import { AuthenticationError, RateLimitError, ValidationError } from '../errors';
 
 /** Builds a minimal `fetch` Response stand-in for the bits the client reads. */
 function makeResponse(opts: {
@@ -89,6 +89,20 @@ describe('CellystialClient', () => {
 
     mockFetch(makeResponse({ status: 400, json: { message: ['url must be an http(s) URL'] } }));
     await expect(client.createWebhook({ url: 'x', events: ['pdf.generated'] })).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('surfaces Retry-After (seconds) on RateLimitError for a 429', async () => {
+    mockFetch(makeResponse({ status: 429, json: { message: 'slow down' }, headers: { 'retry-after': '30' } }));
+    const err = await client.listTemplates().catch((e) => e);
+    expect(err).toBeInstanceOf(RateLimitError);
+    expect((err as RateLimitError).retryAfter).toBe(30);
+  });
+
+  it('leaves retryAfter null when a 429 has no Retry-After header', async () => {
+    mockFetch(makeResponse({ status: 429, json: { message: 'slow down' } }));
+    const err = await client.listTemplates().catch((e) => e);
+    expect(err).toBeInstanceOf(RateLimitError);
+    expect((err as RateLimitError).retryAfter).toBeNull();
   });
 
   it('createWebhook POSTs url+events+description and returns the secret', async () => {

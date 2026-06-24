@@ -1,5 +1,5 @@
 {
-  "name": "@cellystial/sdk",
+  "name": "cellystial-sdk",
   "version": "1.0.0",
   "description": "Official Cellystial SDK for Node.js & TypeScript — generate PDFs from templates via the Cellystial API.",
   "keywords": [
@@ -17,7 +17,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/knight-koder/cellystial-sdk-node.git"
+    "url": "git+https://github.com/cellystial/cellystial-sdk-node.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cellystial/cellystial-sdk-node/issues"
   },
   "engines": {
     "node": ">=18"
@@ -25,8 +28,16 @@
   "type": "commonjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "rm -rf dist && tsc",
