@@ -1,6 +1,6 @@
 {
   "name": "cellystial-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Official Cellystial SDK for Node.js & TypeScript — generate PDFs from templates via the Cellystial API.",
   "keywords": [
     "cellystial",
@@ -37,6 +37,7 @@
   },
   "files": [
     "dist",
+    "docs",
     "CHANGELOG.md"
   ],
   "scripts": {

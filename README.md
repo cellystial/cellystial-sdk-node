@@ -2,7 +2,7 @@
 
 Official Cellystial SDK for Node.js & TypeScript. Generate PDFs from your templates with a clean,
 typed client. Reference implementation — the Python, PHP, and Go SDKs mirror this surface
-(see [`docs/sdk_api_surface.md`](../docs/sdk_api_surface.md)).
+(see [`docs/sdk_api_surface.md`](docs/sdk_api_surface.md)).
 
 ## Install
 

@@ -3,6 +3,14 @@
 All notable changes to this package are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.0.1
+
+### Fixed
+
+- Broken `docs/sdk_api_surface.md` link in the README. The link pointed at
+  `../docs/…`, which escaped the repository root and 404'd on npm/GitHub. The
+  shared API-surface doc now lives in this repo and ships in the package.
+
 ## 1.0.0
 
 Initial public release.
