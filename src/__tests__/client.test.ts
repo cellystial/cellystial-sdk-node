@@ -83,6 +83,43 @@ describe('CellystialClient', () => {
     expect(result.durationMs).toBe(42);
   });
 
+  it('generateImage asks for one page as an image and reads its size headers', async () => {
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47]).buffer;
+    fetchMock.mockResolvedValue(
+      makeResponse({
+        arrayBuffer: png,
+        headers: {
+          'content-type': 'image/png',
+          'content-disposition': 'attachment; filename="report.png"',
+          'x-image-width': '1080',
+          'x-image-height': '1527',
+          'x-page-count': '2',
+          'x-api-duration-ms': '55',
+        },
+      }),
+    );
+    const result = await client.generateImage('weekly-report', { views: 41 }, { page: 1, width: 1080 });
+    const { url, init } = lastCall();
+    expect(url).toBe('https://api.cellystial.com/api/v1/generate');
+    expect((init.headers as Record<string, string>).Accept).toBe('image/png');
+    expect(JSON.parse(init.body as string)).toEqual({
+      templateId: 'weekly-report', data: { views: 41 }, format: 'png', page: 1, width: 1080,
+    });
+    expect([...result.content]).toEqual([0x89, 0x50, 0x4e, 0x47]);
+    expect(result).toMatchObject({
+      mimeType: 'image/png', filename: 'report.png', width: 1080, height: 1527, pageCount: 2, durationMs: 55,
+    });
+  });
+
+  it('generateImage sends jpeg with its quality', async () => {
+    fetchMock.mockResolvedValue(makeResponse({ arrayBuffer: new Uint8Array([0xff, 0xd8]).buffer, headers: {} }));
+    const result = await client.generateImage('t', {}, { format: 'jpeg', quality: 70 });
+    const { init } = lastCall();
+    expect((init.headers as Record<string, string>).Accept).toBe('image/jpeg');
+    expect(JSON.parse(init.body as string)).toMatchObject({ format: 'jpeg', quality: 70 });
+    expect(result.width).toBeNull();
+  });
+
   it('maps 401 to AuthenticationError and 400 to ValidationError', async () => {
     mockFetch(makeResponse({ status: 401, json: { message: 'bad key' } }));
     await expect(client.listTemplates()).rejects.toBeInstanceOf(AuthenticationError);

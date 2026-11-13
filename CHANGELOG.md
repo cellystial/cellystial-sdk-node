@@ -3,6 +3,15 @@
 All notable changes to this package are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- `generateImage(templateId, data, { format, page, width, quality })`: one page of a
+  document as a PNG or JPEG image (for chat apps, previews and thumbnails), with its
+  pixel size and the document's page count. Needs the server's image output
+  (`POST /generate` with `format: "png" | "jpeg"`).
+
 ## 1.0.1
 
 ### Fixed

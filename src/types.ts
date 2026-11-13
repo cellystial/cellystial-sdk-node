@@ -99,6 +99,34 @@ export interface BatchItem {
 }
 
 /** Result of `generatePdf` — the PDF bytes plus useful response metadata. */
+/** Options for {@link CellystialClient.generateImage}: one page of a document as an image. */
+export interface GenerateImageOptions {
+  /** "png" (default) or "jpeg". */
+  format?: 'png' | 'jpeg';
+  /** The page to render, 1-based (default 1). */
+  page?: number;
+  /** Width in pixels, 200 to 4096 (default 1080); the height follows the page. */
+  width?: number;
+  /** JPEG quality, 1 to 100 (default 85). */
+  quality?: number;
+}
+
+export interface GenerateImageResult {
+  /** The page image. */
+  content: Buffer;
+  /** "image/png" or "image/jpeg". */
+  mimeType: string;
+  /** Filename parsed from the `Content-Disposition` header. */
+  filename: string;
+  /** Pixel size, from `X-Image-Width` / `X-Image-Height` (null if absent). */
+  width: number | null;
+  height: number | null;
+  /** Pages in the document, from `X-Page-Count` (null if absent). */
+  pageCount: number | null;
+  /** Server-side generation time from `X-API-Duration-MS`, or null if absent. */
+  durationMs: number | null;
+}
+
 export interface GenerateResult {
   /** The generated PDF. */
   content: Buffer;

@@ -22,6 +22,8 @@ export type {
   Template,
   ListTemplatesParams,
   EmailDelivery,
+  GenerateImageOptions,
+  GenerateImageResult,
   GeneratePdfOptions,
   GenerateResult,
   VerifyWebhookOptions,

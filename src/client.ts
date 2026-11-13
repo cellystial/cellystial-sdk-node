@@ -5,6 +5,8 @@ import {
   BatchStatus,
   CellystialClientOptions,
   CreateWebhookParams,
+  GenerateImageOptions,
+  GenerateImageResult,
   GeneratePdfOptions,
   GenerateResult,
   ListTemplatesParams,
@@ -99,6 +101,41 @@ export class CellystialClient {
       content,
       filename: parseFilename(res.headers.get('content-disposition')),
       durationMs: durationHeader != null ? Number(durationHeader) : null,
+    };
+  }
+
+  /**
+   * Generates one page of a document as a PNG or JPEG image, for places that show pictures but
+   * not PDFs (chat apps, previews, thumbnails). Billed like a PDF.
+   *
+   * @example
+   * const { content } = await client.generateImage('weekly-report', data, { format: 'png' });
+   */
+  async generateImage(
+    templateId: string,
+    data: Record<string, unknown>,
+    options: GenerateImageOptions = {},
+  ): Promise<GenerateImageResult> {
+    const format = options.format ?? 'png';
+    const body: Record<string, unknown> = { templateId, data, format };
+    if (options.page !== undefined) body.page = options.page;
+    if (options.width !== undefined) body.width = options.width;
+    if (options.quality !== undefined) body.quality = options.quality;
+
+    const res = await this.request('POST', '/generate', body, format === 'jpeg' ? 'image/jpeg' : 'image/png');
+    const content = Buffer.from(await res.arrayBuffer());
+    const num = (name: string) => {
+      const v = res.headers.get(name);
+      return v != null && v !== '' && Number.isFinite(Number(v)) ? Number(v) : null;
+    };
+    return {
+      content,
+      mimeType: res.headers.get('content-type') ?? (format === 'jpeg' ? 'image/jpeg' : 'image/png'),
+      filename: parseFilename(res.headers.get('content-disposition')),
+      width: num('x-image-width'),
+      height: num('x-image-height'),
+      pageCount: num('x-page-count'),
+      durationMs: num('x-api-duration-ms'),
     };
   }
 
